@@ -9,26 +9,33 @@
 </head>
 
 <body>
-    <canvas id="webgl-canvas"></canvas>
-    <div id="slider-container">
-        <label for="t-slider">t value:</label>
-        <input type="range" id="t-slider" min="0" max="1" step="0.1" value="0.5">
-        <span id="t-value">0.5</span>
-    </div>
-    <div id="button-container">
-        <button id="increase-point-size">Increase Point Size (+)</button>
-        <button id="decrease-point-size">Decrease Point Size (-)</button>
-        <button id="remove-last-point">Remove last point (Z)</button>
-        <button id="toggle-intermediate">Toggle Intermediate Points (I)</button>
-        <button id="clear-points">Clear Points (C)</button>
-        <button id="reset">Reset (R)</button>
-    </div>
-    <div id="instructions">
-        <h3>Instructions:</h3>
-        <ul>
-            <li><strong>Ctrl + Drag:</strong> Hold <kbd>Ctrl</kbd> and drag a point to move it.</li>
-            <li><strong>Shift + Click:</strong> Hold <kbd>Shift</kbd> and click a point to remove it.</li>
-        </ul>
+    <div id="container">
+        <canvas id="webgl-canvas"></canvas>
+
+        <div id="controls">
+            <div id="instructions">
+                <h3>Instructions:</h3>
+                <ul>
+                    <li><strong>Left click:</strong> Add a point.</li>
+                    <li><strong>Ctrl + Drag:</strong> Hold <kbd>Ctrl</kbd> and drag a point to move it.</li>
+                    <li><strong>Shift + Left click:</strong> Hold <kbd>Shift</kbd> and click a point to remove it.</li>
+                </ul>
+            </div>
+            <div id="slider-container">
+                <label for="t-slider"><strong>t value:</strong></label>
+                <input type="range" id="t-slider" min="0" max="1" step="0.1" value="0.5">
+                <span id="t-value">0.5</span>
+            </div>
+            <div id="button-container">
+                <button id="toggle-intermediate">Toggle Intermediate Points (I)</button>
+                <button id="remove-last-point">Remove last point (Z)</button>
+                <button id="increase-point-size">Increase Point Size (+)</button>
+                <button id="decrease-point-size">Decrease Point Size (-)</button>
+                <button id="clear-points">Clear Points (C)</button>
+                <button id="reset">Reset (R)</button>
+            </div>
+
+        </div>
     </div>
     <script src="main.js"></script>
 </body>
