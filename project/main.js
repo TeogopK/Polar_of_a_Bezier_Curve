@@ -103,38 +103,79 @@ function getNormalizedMouseCoordinates(event) {
     return [x, y];
 }
 
+// Keydown Action Functions
+function increasePointSize() {
+    pointSize += 1.0;
+    console.log(`Point size increased to: ${pointSize}`);
+    render();
+}
+
+function decreasePointSize() {
+    pointSize = Math.max(1.0, pointSize - 1.0); // Ensure point size doesn't go below 1.0
+    console.log(`Point size decreased to: ${pointSize}`);
+    render();
+}
+
+function undoLastPoint() {
+    if (points.length > 0) {
+        points.pop();
+        console.log('Undo');
+        render();
+    }
+}
+
+function toggleIntermediatePoints() {
+    showIntermediate = !showIntermediate; // Toggle the visibility
+    console.log(`Intermediate points and lines visibility: ${showIntermediate}`);
+    render();
+}
+
+function clearAllPoints() {
+    points = []; // Clear the points array
+    console.log('Cleared all points');
+    render();
+}
+
+function resetToDefaults() {
+    points = [];
+    pointSize = DEFAULT_POINT_SIZE; // Reset point size
+    t = DEFAULT_T; // Reset t value
+    tSlider.value = DEFAULT_T; // Reset slider value
+    tValueDisplay.textContent = DEFAULT_T.toFixed(1); // Update displayed t value
+    console.log('Reset to default values');
+    render();
+}
+
 // Event Listener for Key Press
 window.addEventListener('keydown', (event) => {
-    if (event.key === '+' || event.key === '=') { // Increase point size
-        pointSize += 1.0;
-        console.log(`Point size increased to: ${pointSize}`);
-        render();
-    } else if (event.key === '-' || event.key === '_') { // Decrease point size
-        pointSize = Math.max(1.0, pointSize - 1.0); // Ensure point size doesn't go below 1.0
-        console.log(`Point size decreased to: ${pointSize}`);
-        render();
-    } else if (event.key === 'z' || event.key === 'Z') { // Undo (remove last point)
-        if (points.length > 0) {
-            points.pop();
-            console.log('Undo');
-            render();
-        }
-    } else if (event.key === 'i' || event.key === 'I') { // Toggle intermediate points and lines
-        showIntermediate = !showIntermediate; // Toggle the visibility
-        console.log(`Intermediate points and lines visibility: ${showIntermediate}`);
-        render();
-    } else if (event.key === 'c' || event.key === 'C') { // Clear all points
-        points = []; // Clear the points array
-        console.log('Cleared all points');
-        render();
-    } else if (event.key === 'r' || event.key === 'R') { // Reset to default values
-        points = [];
-        pointSize = DEFAULT_POINT_SIZE; // Reset point size
-        t = DEFAULT_T; // Reset t value
-        tSlider.value = DEFAULT_T; // Reset slider value
-        tValueDisplay.textContent = DEFAULT_T.toFixed(1); // Update displayed t value
-        console.log('Reset to default values');
-        render();
+    switch (event.key) {
+        case '+':
+        case '=':
+            increasePointSize();
+            break;
+        case '-':
+        case '_':
+            decreasePointSize();
+            break;
+        case 'z':
+        case 'Z':
+            undoLastPoint();
+            break;
+        case 'i':
+        case 'I':
+            toggleIntermediatePoints();
+            break;
+        case 'c':
+        case 'C':
+            clearAllPoints();
+            break;
+        case 'r':
+        case 'R':
+            resetToDefaults();
+            break;
+        default:
+            // Do nothing for other keys
+            break;
     }
 });
 
@@ -270,17 +311,16 @@ function renderIntermediatePoints() {
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Red color for intermediate points
+        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Green color for intermediate points
         gl.drawArrays(gl.POINTS, 0, intermediatePoints.length);
 
         // Draw the lines connecting the intermediate points
         if (intermediatePoints.length >= 2) {
-            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Red color for intermediate lines
+            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Green color for intermediate lines
             gl.drawArrays(gl.LINE_STRIP, 0, intermediatePoints.length);
         }
     }
 }
-
 
 // Render Function
 function render() {
@@ -315,11 +355,14 @@ function render() {
             gl.drawArrays(gl.LINE_STRIP, 0, points.length);
         }
 
-        // Draw the Bézier curve
+        // Draw the intermediate points and lines
         renderIntermediatePoints();
+
+        // Draw the Bézier curve
         renderBezierCurve();
     }
 }
 
+resetToDefaults()
 resizeCanvas();
 render();
