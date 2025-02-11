@@ -1,15 +1,14 @@
 const canvas = document.getElementById('webgl-canvas');
-const gl = canvas.getContext('webgl');
+const gl = canvas.getContext('webgl', { antialias: true });
 
 if (!gl) {
     console.error('WebGL not supported, falling back on experimental-webgl');
-    gl = canvas.getContext('experimental-webgl');
+    gl = canvas.getContext('experimental-webgl', { antialias: true });
 }
 
 if (!gl) {
     alert('Your browser does not support WebGL');
 }
-
 // Vertex Shader
 const vsSource = `
     attribute vec4 aVertexPosition;
@@ -195,6 +194,11 @@ function render() {
         gl.uniform1f(pointSizeLocation, pointSize);
 
         gl.drawArrays(gl.POINTS, 0, points.length);
+
+        // Draw the lines connecting the points
+        if (points.length >= 2) {
+            gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+        }
     }
 }
 
