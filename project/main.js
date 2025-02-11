@@ -70,6 +70,7 @@ function initShaderProgram(gl, vertexShader, fragmentShader) {
 let points = [];
 let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
 let pointSize = 9.0; // Initial point size
+let t = 0.5; // Initial t value
 
 // Resize Canvas to Fit CSS Dimensions
 function resizeCanvas() {
@@ -210,6 +211,56 @@ function renderBezierCurve() {
     }
 }
 
+// Get the slider and t-value display elements
+const tSlider = document.getElementById('t-slider');
+const tValueDisplay = document.getElementById('t-value');
+
+// Event Listener for Slider
+tSlider.addEventListener('input', () => {
+    t = parseFloat(tSlider.value); // Update the t value
+    tValueDisplay.textContent = t.toFixed(1); // Update the displayed t value
+    render(); // Re-render the scene
+});
+
+// Function to Compute Intermediate Points After One Iteration of de Casteljau
+function computeIntermediatePoints(points, t) {
+    const intermediatePoints = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        const x = (1 - t) * points[i][0] + t * points[i + 1][0];
+        const y = (1 - t) * points[i][1] + t * points[i + 1][1];
+        intermediatePoints.push([x, y]);
+    }
+    return intermediatePoints;
+}
+
+// Render Intermediate Points and Lines
+function renderIntermediatePoints() {
+    if (points.length > 2) {
+        const intermediatePoints = computeIntermediatePoints(points, t);
+
+        // Draw the intermediate points
+        const intermediateVertices = intermediatePoints.flat();
+        const intermediateBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, intermediateBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(intermediateVertices), gl.STATIC_DRAW);
+
+        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
+        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Red color for intermediate points
+        gl.drawArrays(gl.POINTS, 0, intermediatePoints.length);
+
+        // Draw the lines connecting the intermediate points
+        if (intermediatePoints.length >= 2) {
+            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Red color for intermediate lines
+            gl.drawArrays(gl.LINE_STRIP, 0, intermediatePoints.length);
+        }
+    }
+}
+
+
 // Render Function
 function render() {
     console.log(points);
@@ -244,6 +295,7 @@ function render() {
         }
 
         // Draw the Bézier curve
+        renderIntermediatePoints();
         renderBezierCurve();
     }
 }
