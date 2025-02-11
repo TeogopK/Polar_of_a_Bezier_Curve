@@ -15,7 +15,7 @@ const vsSource = `
     attribute vec4 aVertexPosition;
     void main() {
         gl_Position = aVertexPosition;
-        gl_PointSize = 8.0; // Size of the points
+        gl_PointSize = 9.0; // Size of the points
     }
 `;
 
@@ -66,6 +66,7 @@ function initShaderProgram(gl, vertexShader, fragmentShader) {
 
 // Global Variables
 let points = [];
+let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
 
 // Resize Canvas to Fit CSS Dimensions
 function resizeCanvas() {
@@ -93,7 +94,6 @@ function getNormalizedMouseCoordinates(event) {
     return [x, y];
 }
 
-
 // Event Listener for Key Press
 window.addEventListener('keydown', (event) => {
     if (event.key === 'z' || event.key === 'Z') { // Check if Z key is pressed
@@ -110,18 +110,17 @@ canvas.addEventListener('click', (event) => {
     if (event.button === 0) { // Left-click
         const [x, y] = getNormalizedMouseCoordinates(event);
 
-        if (event.ctrlKey) { // Check if Ctrl key is pressed
-            // Find and remove the clicked point
+        if (event.shiftKey) { // Shift + Left Click: Remove the clicked point
             const clickedPointIndex = findClickedPointIndex(x, y);
             if (clickedPointIndex !== -1) {
                 points.splice(clickedPointIndex, 1); // Remove the clicked point
+                console.log(`Point removed at index: ${clickedPointIndex}`); // Debug log
+                render();
             }
-        } else {
-            // Add a new point
+        } else if (!event.ctrlKey) { // Regular Left Click: Add a new point
             points.push([x, y]);
+            render();
         }
-
-        render();
     }
 });
 
@@ -138,11 +137,34 @@ function findClickedPointIndex(x, y) {
     return -1; // No point found
 }
 
+canvas.addEventListener('mousedown', (event) => {
+    if (event.button === 0) { // Left-click
+        const [x, y] = getNormalizedMouseCoordinates(event);
+
+        if (event.ctrlKey) { // Ctrl + Left Click: Select the clicked point for dragging
+            selectedPointIndex = findClickedPointIndex(x, y);
+            console.log(`Point selected at index: ${selectedPointIndex}`); // Debug log
+        }
+    }
+});
+
+canvas.addEventListener('mousemove', (event) => {
+    if (selectedPointIndex !== -1 && event.ctrlKey) { // If a point is selected and Ctrl is held down
+        const [x, y] = getNormalizedMouseCoordinates(event);
+        points[selectedPointIndex] = [x, y]; // Update the point's position
+        render();
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    selectedPointIndex = -1; // Deselect the point
+});
+
 window.addEventListener('resize', resizeCanvas);
 
 // Render Function
 function render() {
-    console.log(points)
+    console.log(points);
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -163,4 +185,4 @@ function render() {
 }
 
 resizeCanvas();
-render(); 
+render();
