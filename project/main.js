@@ -13,9 +13,10 @@ if (!gl) {
 // Vertex Shader
 const vsSource = `
     attribute vec4 aVertexPosition;
+    uniform float uPointSize; // Uniform for point size
     void main() {
         gl_Position = aVertexPosition;
-        gl_PointSize = 9.0; // Size of the points
+        gl_PointSize = uPointSize; // Use the uniform for point size
     }
 `;
 
@@ -67,6 +68,7 @@ function initShaderProgram(gl, vertexShader, fragmentShader) {
 // Global Variables
 let points = [];
 let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
+let pointSize = 9.0; // Initial point size
 
 // Resize Canvas to Fit CSS Dimensions
 function resizeCanvas() {
@@ -96,9 +98,17 @@ function getNormalizedMouseCoordinates(event) {
 
 // Event Listener for Key Press
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'z' || event.key === 'Z') { // Check if Z key is pressed
+    if (event.key === '+' || event.key === '=') { // Increase point size
+        pointSize += 1.0;
+        console.log(`Point size increased to: ${pointSize}`);
+        render();
+    } else if (event.key === '-' || event.key === '_') { // Decrease point size
+        pointSize = Math.max(1.0, pointSize - 1.0); // Ensure point size doesn't go below 1.0
+        console.log(`Point size decreased to: ${pointSize}`);
+        render();
+    } else if (event.key === 'z' || event.key === 'Z') { // Undo (remove last point)
         if (points.length > 0) {
-            points.pop(); // Remove the last point
+            points.pop();
             console.log('Undo');
             render();
         }
@@ -179,7 +189,11 @@ function render() {
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
+        // Pass the point size to the shader
+        const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
         gl.useProgram(shaderProgram);
+        gl.uniform1f(pointSizeLocation, pointSize);
+
         gl.drawArrays(gl.POINTS, 0, points.length);
     }
 }
