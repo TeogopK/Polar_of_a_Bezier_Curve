@@ -106,33 +106,32 @@ function getNormalizedMouseCoordinates(event) {
 // Keydown Action Functions
 function increasePointSize() {
     pointSize += 1.0;
-    console.log(`Point size increased to: ${pointSize}`);
+
     render();
 }
 
 function decreasePointSize() {
     pointSize = Math.max(1.0, pointSize - 1.0); // Ensure point size doesn't go below 1.0
-    console.log(`Point size decreased to: ${pointSize}`);
+
     render();
 }
 
-function undoLastPoint() {
+function removeLastPoint() {
     if (points.length > 0) {
         points.pop();
-        console.log('Undo');
         render();
     }
 }
 
 function toggleIntermediatePoints() {
     showIntermediate = !showIntermediate; // Toggle the visibility
-    console.log(`Intermediate points and lines visibility: ${showIntermediate}`);
+
     render();
 }
 
 function clearAllPoints() {
     points = []; // Clear the points array
-    console.log('Cleared all points');
+
     render();
 }
 
@@ -142,7 +141,7 @@ function resetToDefaults() {
     t = DEFAULT_T; // Reset t value
     tSlider.value = DEFAULT_T; // Reset slider value
     tValueDisplay.textContent = DEFAULT_T.toFixed(1); // Update displayed t value
-    console.log('Reset to default values');
+
     render();
 }
 
@@ -159,7 +158,7 @@ window.addEventListener('keydown', (event) => {
             break;
         case 'z':
         case 'Z':
-            undoLastPoint();
+            removeLastPoint();
             break;
         case 'i':
         case 'I':
@@ -188,7 +187,7 @@ canvas.addEventListener('click', (event) => {
             const clickedPointIndex = findClickedPointIndex(x, y);
             if (clickedPointIndex !== -1) {
                 points.splice(clickedPointIndex, 1); // Remove the clicked point
-                console.log(`Point removed at index: ${clickedPointIndex}`); // Debug log
+
                 render();
             }
         } else if (!event.ctrlKey) { // Regular Left Click: Add a new point
@@ -217,7 +216,7 @@ canvas.addEventListener('mousedown', (event) => {
 
         if (event.ctrlKey) { // Ctrl + Left Click: Select the clicked point for dragging
             selectedPointIndex = findClickedPointIndex(x, y);
-            console.log(`Point selected at index: ${selectedPointIndex}`); // Debug log
+
         }
     }
 });
@@ -284,6 +283,22 @@ tSlider.addEventListener('input', () => {
     render(); // Re-render the scene
 });
 
+// Get button elements
+const increasePointSizeButton = document.getElementById('increase-point-size');
+const decreasePointSizeButton = document.getElementById('decrease-point-size');
+const removeLastPointButton = document.getElementById('remove-last-point');
+const toggleIntermediateButton = document.getElementById('toggle-intermediate');
+const clearPointsButton = document.getElementById('clear-points');
+const resetButton = document.getElementById('reset');
+
+// Attach event listeners to buttons
+increasePointSizeButton.addEventListener('click', increasePointSize);
+decreasePointSizeButton.addEventListener('click', decreasePointSize);
+removeLastPointButton.addEventListener('click', removeLastPoint);
+toggleIntermediateButton.addEventListener('click', toggleIntermediatePoints);
+clearPointsButton.addEventListener('click', clearAllPoints);
+resetButton.addEventListener('click', resetToDefaults);
+
 // Function to Compute Intermediate Points After One Iteration of de Casteljau
 function computeIntermediatePoints(points, t) {
     const intermediatePoints = [];
@@ -324,7 +339,7 @@ function renderIntermediatePoints() {
 
 // Render Function
 function render() {
-    console.log(points);
+
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
