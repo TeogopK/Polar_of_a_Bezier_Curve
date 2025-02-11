@@ -66,11 +66,15 @@ function initShaderProgram(gl, vertexShader, fragmentShader) {
     return shaderProgram;
 }
 
+// Default Values
+const DEFAULT_POINT_SIZE = 9.0; // Default point size
+const DEFAULT_T = 0.5; // Default t value
+
 // Global Variables
 let points = [];
 let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
-let pointSize = 9.0; // Initial point size
-let t = 0.5; // Initial t value
+let pointSize = DEFAULT_POINT_SIZE; // Initial point size
+let t = DEFAULT_T; // Initial t value
 let showIntermediate = true; // Track whether to show intermediate points and lines
 
 // Resize Canvas to Fit CSS Dimensions
@@ -118,6 +122,18 @@ window.addEventListener('keydown', (event) => {
     } else if (event.key === 'i' || event.key === 'I') { // Toggle intermediate points and lines
         showIntermediate = !showIntermediate; // Toggle the visibility
         console.log(`Intermediate points and lines visibility: ${showIntermediate}`);
+        render();
+    } else if (event.key === 'c' || event.key === 'C') { // Clear all points
+        points = []; // Clear the points array
+        console.log('Cleared all points');
+        render();
+    } else if (event.key === 'r' || event.key === 'R') { // Reset to default values
+        points = [];
+        pointSize = DEFAULT_POINT_SIZE; // Reset point size
+        t = DEFAULT_T; // Reset t value
+        tSlider.value = DEFAULT_T; // Reset slider value
+        tValueDisplay.textContent = DEFAULT_T.toFixed(1); // Update displayed t value
+        console.log('Reset to default values');
         render();
     }
 });
