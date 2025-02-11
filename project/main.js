@@ -71,6 +71,7 @@ let points = [];
 let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
 let pointSize = 9.0; // Initial point size
 let t = 0.5; // Initial t value
+let showIntermediate = true; // Track whether to show intermediate points and lines
 
 // Resize Canvas to Fit CSS Dimensions
 function resizeCanvas() {
@@ -114,6 +115,10 @@ window.addEventListener('keydown', (event) => {
             console.log('Undo');
             render();
         }
+    } else if (event.key === 'i' || event.key === 'I') { // Toggle intermediate points and lines
+        showIntermediate = !showIntermediate; // Toggle the visibility
+        console.log(`Intermediate points and lines visibility: ${showIntermediate}`);
+        render();
     }
 });
 
@@ -235,7 +240,7 @@ function computeIntermediatePoints(points, t) {
 
 // Render Intermediate Points and Lines
 function renderIntermediatePoints() {
-    if (points.length > 2) {
+    if (points.length > 2 && showIntermediate) {
         const intermediatePoints = computeIntermediatePoints(points, t);
 
         // Draw the intermediate points
