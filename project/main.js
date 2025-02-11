@@ -9,6 +9,7 @@ if (!gl) {
 if (!gl) {
     alert('Your browser does not support WebGL');
 }
+
 // Vertex Shader
 const vsSource = `
     attribute vec4 aVertexPosition;
@@ -22,6 +23,7 @@ const vsSource = `
 // Fragment Shader
 const fsSource = `
     precision mediump float;
+    uniform vec4 uColor; // Uniform for color
     void main() {
         vec2 coord = gl_PointCoord - vec2(0.5, 0.5);
         float distance = length(coord);
@@ -30,7 +32,7 @@ const fsSource = `
             discard;
         }
 
-        gl_FragColor = vec4(0.1, 0.1, 0.8, 1.0); // Blue color
+        gl_FragColor = uColor; // Use the uniform for color
     }
 `;
 
@@ -171,6 +173,43 @@ canvas.addEventListener('mouseup', () => {
 
 window.addEventListener('resize', resizeCanvas);
 
+// De Casteljau Algorithm
+function deCasteljau(points, t) {
+    let tmpPoints = [...points];
+    for (let r = 1; r < points.length; r++) {
+        for (let i = 0; i < points.length - r; i++) {
+            tmpPoints[i] = [
+                (1 - t) * tmpPoints[i][0] + t * tmpPoints[i + 1][0],
+                (1 - t) * tmpPoints[i][1] + t * tmpPoints[i + 1][1]
+            ];
+        }
+    }
+    return tmpPoints[0];
+}
+
+// Render Bézier Curve
+function renderBezierCurve() {
+    if (points.length > 2) {
+        const curveVertices = [];
+        for (let t = 0; t <= 1; t += 0.01) {
+            const point = deCasteljau(points, t);
+            curveVertices.push(point[0], point[1]);
+        }
+
+        const curveBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, curveBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(curveVertices), gl.STATIC_DRAW);
+
+        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
+        gl.uniform4f(colorLocation, 0.4, 0.7, 1.0, 1.0); // Light blue color for the curve
+        gl.drawArrays(gl.LINE_STRIP, 0, curveVertices.length / 2);
+    }
+}
+
 // Render Function
 function render() {
     console.log(points);
@@ -190,15 +229,22 @@ function render() {
 
         // Pass the point size to the shader
         const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
+        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor'); // Get the color uniform location
         gl.useProgram(shaderProgram);
         gl.uniform1f(pointSizeLocation, pointSize);
 
+        // Draw the points
+        gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0); // Blue color for points
         gl.drawArrays(gl.POINTS, 0, points.length);
 
         // Draw the lines connecting the points
         if (points.length >= 2) {
+            gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0); // Blue color for lines
             gl.drawArrays(gl.LINE_STRIP, 0, points.length);
         }
+
+        // Draw the Bézier curve
+        renderBezierCurve();
     }
 }
 

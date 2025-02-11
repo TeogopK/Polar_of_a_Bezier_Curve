@@ -13,7 +13,7 @@ body {
 /* Canvas styling */
 canvas {
   display: block;
-  border: 1px solid #000;
+  border: 2px solid #000;
   background-color: #fff;
   width: 60%;
   height: 70vh;
