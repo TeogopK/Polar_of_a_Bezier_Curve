@@ -15,7 +15,7 @@ const vsSource = `
     attribute vec4 aVertexPosition;
     void main() {
         gl_Position = aVertexPosition;
-        gl_PointSize = 7.0; // Size of the points
+        gl_PointSize = 8.0; // Size of the points
     }
 `;
 
@@ -23,7 +23,14 @@ const vsSource = `
 const fsSource = `
     precision mediump float;
     void main() {
-        gl_FragColor = vec4(0.1, 0.1, 0.8, 1.0);
+        vec2 coord = gl_PointCoord - vec2(0.5, 0.5);
+        float distance = length(coord);
+
+        if (distance > 0.5) {
+            discard;
+        }
+
+        gl_FragColor = vec4(0.1, 0.1, 0.8, 1.0); // Blue color
     }
 `;
 
@@ -86,18 +93,56 @@ function getNormalizedMouseCoordinates(event) {
     return [x, y];
 }
 
-// Event Listeners
-canvas.addEventListener('click', (event) => {
-    const [x, y] = getNormalizedMouseCoordinates(event);
-    points.push([x, y]);
 
-    render();
+// Event Listener for Key Press
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'z' || event.key === 'Z') { // Check if Z key is pressed
+        if (points.length > 0) {
+            points.pop(); // Remove the last point
+            console.log('Undo');
+            render();
+        }
+    }
 });
+
+// Event Listener for Click
+canvas.addEventListener('click', (event) => {
+    if (event.button === 0) { // Left-click
+        const [x, y] = getNormalizedMouseCoordinates(event);
+
+        if (event.ctrlKey) { // Check if Ctrl key is pressed
+            // Find and remove the clicked point
+            const clickedPointIndex = findClickedPointIndex(x, y);
+            if (clickedPointIndex !== -1) {
+                points.splice(clickedPointIndex, 1); // Remove the clicked point
+            }
+        } else {
+            // Add a new point
+            points.push([x, y]);
+        }
+
+        render();
+    }
+});
+
+// Helper Function to Find Clicked Point Index
+function findClickedPointIndex(x, y) {
+    const threshold = 0.05; // Threshold for point selection
+    for (let i = 0; i < points.length; i++) {
+        const dx = points[i][0] - x;
+        const dy = points[i][1] - y;
+        if (dx * dx + dy * dy < threshold * threshold) {
+            return i; // Return the index of the clicked point
+        }
+    }
+    return -1; // No point found
+}
 
 window.addEventListener('resize', resizeCanvas);
 
 // Render Function
 function render() {
+    console.log(points)
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
