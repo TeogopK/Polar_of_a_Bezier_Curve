@@ -70,6 +70,7 @@ let selectedPointIndex = -1;
 let pointSize = DEFAULT_POINT_SIZE;
 let t = DEFAULT_T;
 let showIntermediate = true;
+let showFirstPolar = true;
 
 function resizeCanvas() {
 
@@ -77,10 +78,8 @@ function resizeCanvas() {
     const canvasWidth = parseFloat(canvasStyle.width);
     const canvasHeight = parseFloat(canvasStyle.height);
 
-
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
-
 
     gl.viewport(0, 0, canvas.width, canvas.height);
 
@@ -116,7 +115,11 @@ function removeLastPoint() {
 
 function toggleIntermediatePoints() {
     showIntermediate = !showIntermediate;
+    render();
+}
 
+function toggleFirstPolar() {
+    showFirstPolar = !showFirstPolar;
     render();
 }
 
@@ -167,6 +170,10 @@ window.addEventListener('keydown', (event) => {
             break;
         case ']':
             increaseSliderValue();
+            break;
+        case 'p':
+        case 'P':
+            toggleFirstPolar();
             break;
         default:
             break;
@@ -288,17 +295,19 @@ function decreaseSliderValue() {
     render();
 }
 
+const toggleIntermediateButton = document.getElementById('toggle-intermediate');
+const toggleFirstPolarButton = document.getElementById('toggle-first-polar');
 const increasePointSizeButton = document.getElementById('increase-point-size');
 const decreasePointSizeButton = document.getElementById('decrease-point-size');
 const removeLastPointButton = document.getElementById('remove-last-point');
-const toggleIntermediateButton = document.getElementById('toggle-intermediate');
 const clearPointsButton = document.getElementById('clear-points');
 const resetButton = document.getElementById('reset');
 
+toggleIntermediateButton.addEventListener('click', toggleIntermediatePoints);
+toggleFirstPolarButton.addEventListener('click', toggleFirstPolar);
 increasePointSizeButton.addEventListener('click', increasePointSize);
 decreasePointSizeButton.addEventListener('click', decreasePointSize);
 removeLastPointButton.addEventListener('click', removeLastPoint);
-toggleIntermediateButton.addEventListener('click', toggleIntermediatePoints);
 clearPointsButton.addEventListener('click', clearAllPoints);
 resetButton.addEventListener('click', resetToDefaults);
 
@@ -316,7 +325,6 @@ function renderIntermediatePoints() {
     if (points.length > 2 && showIntermediate) {
         const intermediatePoints = computeIntermediatePoints(points, t);
 
-
         const intermediateVertices = intermediatePoints.flat();
         const intermediateBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, intermediateBuffer);
@@ -329,7 +337,6 @@ function renderIntermediatePoints() {
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
         gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
         gl.drawArrays(gl.POINTS, 0, intermediatePoints.length);
-
 
         if (intermediatePoints.length >= 2) {
             gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
@@ -354,27 +361,22 @@ function render() {
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-
         const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
         gl.useProgram(shaderProgram);
         gl.uniform1f(pointSizeLocation, pointSize);
 
-
         gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
         gl.drawArrays(gl.POINTS, 0, points.length);
-
 
         if (points.length >= 2) {
             gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
             gl.drawArrays(gl.LINE_STRIP, 0, points.length);
         }
 
-
-        renderIntermediatePoints();
-
-
         renderBezierCurve();
+        renderIntermediatePoints();
+        renderFirstPolar();
     }
 }
 
