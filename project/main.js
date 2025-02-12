@@ -10,20 +10,18 @@ if (!gl) {
     alert('Your browser does not support WebGL');
 }
 
-// Vertex Shader
 const vsSource = `
     attribute vec4 aVertexPosition;
-    uniform float uPointSize; // Uniform for point size
+    uniform float uPointSize;
     void main() {
         gl_Position = aVertexPosition;
-        gl_PointSize = uPointSize; // Use the uniform for point size
+        gl_PointSize = uPointSize;
     }
 `;
 
-// Fragment Shader
 const fsSource = `
     precision mediump float;
-    uniform vec4 uColor; // Uniform for color
+    uniform vec4 uColor;
     void main() {
         vec2 coord = gl_PointCoord - vec2(0.5, 0.5);
         float distance = length(coord);
@@ -32,16 +30,14 @@ const fsSource = `
             discard;
         }
 
-        gl_FragColor = uColor; // Use the uniform for color
+        gl_FragColor = uColor;
     }
 `;
 
-// Initialize Shaders
 const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vsSource);
 const fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fsSource);
 const shaderProgram = initShaderProgram(gl, vertexShader, fragmentShader);
 
-// Helper Functions
 function compileShader(gl, type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -66,44 +62,39 @@ function initShaderProgram(gl, vertexShader, fragmentShader) {
     return shaderProgram;
 }
 
-// Default Values
-const DEFAULT_POINT_SIZE = 9.0; // Default point size
-const DEFAULT_T = 0.5; // Default t value
+const DEFAULT_POINT_SIZE = 9.0;
+const DEFAULT_T = 0.5;
 
-// Global Variables
 let points = [];
-let selectedPointIndex = -1; // Track the index of the selected point (-1 means no point is selected)
-let pointSize = DEFAULT_POINT_SIZE; // Initial point size
-let t = DEFAULT_T; // Initial t value
-let showIntermediate = true; // Track whether to show intermediate points and lines
+let selectedPointIndex = -1;
+let pointSize = DEFAULT_POINT_SIZE;
+let t = DEFAULT_T;
+let showIntermediate = true;
 
-// Resize Canvas to Fit CSS Dimensions
 function resizeCanvas() {
-    // Parse CSS dimensions
+
     const canvasStyle = window.getComputedStyle(canvas);
     const canvasWidth = parseFloat(canvasStyle.width);
     const canvasHeight = parseFloat(canvasStyle.height);
 
-    // Set canvas dimensions
+
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
 
-    // Update WebGL viewport
+
     gl.viewport(0, 0, canvas.width, canvas.height);
 
     render();
 }
 
-// Normalize Mouse Coordinates to WebGL Clip Space
 function getNormalizedMouseCoordinates(event) {
     const rect = canvas.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / canvas.width) * 2 - 1; // Normalize to [-1, 1]
-    const y = 1 - ((event.clientY - rect.top) / canvas.height) * 2; // Normalize to [-1, 1]
+    const x = ((event.clientX - rect.left) / canvas.width) * 2 - 1;
+    const y = 1 - ((event.clientY - rect.top) / canvas.height) * 2;
 
     return [x, y];
 }
 
-// Keydown Action Functions
 function increasePointSize() {
     pointSize += 1.0;
 
@@ -111,7 +102,7 @@ function increasePointSize() {
 }
 
 function decreasePointSize() {
-    pointSize = Math.max(1.0, pointSize - 1.0); // Ensure point size doesn't go below 1.0
+    pointSize = Math.max(1.0, pointSize - 1.0);
 
     render();
 }
@@ -124,28 +115,27 @@ function removeLastPoint() {
 }
 
 function toggleIntermediatePoints() {
-    showIntermediate = !showIntermediate; // Toggle the visibility
+    showIntermediate = !showIntermediate;
 
     render();
 }
 
 function clearAllPoints() {
-    points = []; // Clear the points array
+    points = [];
 
     render();
 }
 
 function resetToDefaults() {
     points = [];
-    pointSize = DEFAULT_POINT_SIZE; // Reset point size
-    t = DEFAULT_T; // Reset t value
-    tSlider.value = DEFAULT_T; // Reset slider value
-    tValueDisplay.textContent = DEFAULT_T.toFixed(1); // Update displayed t value
+    pointSize = DEFAULT_POINT_SIZE;
+    t = DEFAULT_T;
+    tSlider.value = DEFAULT_T;
+    tValueDisplay.textContent = DEFAULT_T.toFixed(1);
 
     render();
 }
 
-// Event Listener for Key Press
 window.addEventListener('keydown', (event) => {
     switch (event.key) {
         case '+':
@@ -172,49 +162,52 @@ window.addEventListener('keydown', (event) => {
         case 'R':
             resetToDefaults();
             break;
+        case '[':
+            decreaseSliderValue();
+            break;
+        case ']':
+            increaseSliderValue();
+            break;
         default:
-            // Do nothing for other keys
             break;
     }
 });
 
-// Event Listener for Click
 canvas.addEventListener('click', (event) => {
-    if (event.button === 0) { // Left-click
+    if (event.button === 0) {
         const [x, y] = getNormalizedMouseCoordinates(event);
 
-        if (event.shiftKey) { // Shift + Left Click: Remove the clicked point
+        if (event.shiftKey) {
             const clickedPointIndex = findClickedPointIndex(x, y);
             if (clickedPointIndex !== -1) {
-                points.splice(clickedPointIndex, 1); // Remove the clicked point
+                points.splice(clickedPointIndex, 1);
 
                 render();
             }
-        } else if (!event.ctrlKey) { // Regular Left Click: Add a new point
+        } else if (!event.ctrlKey) {
             points.push([x, y]);
             render();
         }
     }
 });
 
-// Helper Function to Find Clicked Point Index
 function findClickedPointIndex(x, y) {
-    const threshold = 0.05; // Threshold for point selection
+    const threshold = 0.05;
     for (let i = 0; i < points.length; i++) {
         const dx = points[i][0] - x;
         const dy = points[i][1] - y;
         if (dx * dx + dy * dy < threshold * threshold) {
-            return i; // Return the index of the clicked point
+            return i;
         }
     }
-    return -1; // No point found
+    return -1;
 }
 
 canvas.addEventListener('mousedown', (event) => {
-    if (event.button === 0) { // Left-click
+    if (event.button === 0) {
         const [x, y] = getNormalizedMouseCoordinates(event);
 
-        if (event.ctrlKey) { // Ctrl + Left Click: Select the clicked point for dragging
+        if (event.ctrlKey) {
             selectedPointIndex = findClickedPointIndex(x, y);
 
         }
@@ -222,20 +215,19 @@ canvas.addEventListener('mousedown', (event) => {
 });
 
 canvas.addEventListener('mousemove', (event) => {
-    if (selectedPointIndex !== -1 && event.ctrlKey) { // If a point is selected and Ctrl is held down
+    if (selectedPointIndex !== -1 && event.ctrlKey) {
         const [x, y] = getNormalizedMouseCoordinates(event);
-        points[selectedPointIndex] = [x, y]; // Update the point's position
+        points[selectedPointIndex] = [x, y];
         render();
     }
 });
 
 canvas.addEventListener('mouseup', () => {
-    selectedPointIndex = -1; // Deselect the point
+    selectedPointIndex = -1;
 });
 
 window.addEventListener('resize', resizeCanvas);
 
-// De Casteljau Algorithm
 function deCasteljau(points, t) {
     let tmpPoints = [...points];
     for (let r = 1; r < points.length; r++) {
@@ -249,7 +241,6 @@ function deCasteljau(points, t) {
     return tmpPoints[0];
 }
 
-// Render Bézier Curve
 function renderBezierCurve() {
     if (points.length > 2) {
         const curveVertices = [];
@@ -267,23 +258,36 @@ function renderBezierCurve() {
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.4, 0.7, 1.0, 1.0); // Light blue color for the curve
+        gl.uniform4f(colorLocation, 0.4, 0.7, 1.0, 1.0);
         gl.drawArrays(gl.LINE_STRIP, 0, curveVertices.length / 2);
     }
 }
 
-// Get the slider and t-value display elements
 const tSlider = document.getElementById('t-slider');
 const tValueDisplay = document.getElementById('t-value');
 
-// Event Listener for Slider
 tSlider.addEventListener('input', () => {
-    t = parseFloat(tSlider.value); // Update the t value
-    tValueDisplay.textContent = t.toFixed(1); // Update the displayed t value
-    render(); // Re-render the scene
+    t = parseFloat(tSlider.value);
+    tValueDisplay.textContent = t.toFixed(1);
+    render();
 });
 
-// Get button elements
+function increaseSliderValue() {
+    const step = 0.1;
+    t = Math.min(1, t + step);
+    tSlider.value = t;
+    tValueDisplay.textContent = t.toFixed(1);
+    render();
+}
+
+function decreaseSliderValue() {
+    const step = 0.1;
+    t = Math.max(0, t - step);
+    tSlider.value = t;
+    tValueDisplay.textContent = t.toFixed(1);
+    render();
+}
+
 const increasePointSizeButton = document.getElementById('increase-point-size');
 const decreasePointSizeButton = document.getElementById('decrease-point-size');
 const removeLastPointButton = document.getElementById('remove-last-point');
@@ -291,7 +295,6 @@ const toggleIntermediateButton = document.getElementById('toggle-intermediate');
 const clearPointsButton = document.getElementById('clear-points');
 const resetButton = document.getElementById('reset');
 
-// Attach event listeners to buttons
 increasePointSizeButton.addEventListener('click', increasePointSize);
 decreasePointSizeButton.addEventListener('click', decreasePointSize);
 removeLastPointButton.addEventListener('click', removeLastPoint);
@@ -299,7 +302,6 @@ toggleIntermediateButton.addEventListener('click', toggleIntermediatePoints);
 clearPointsButton.addEventListener('click', clearAllPoints);
 resetButton.addEventListener('click', resetToDefaults);
 
-// Function to Compute Intermediate Points After One Iteration of de Casteljau
 function computeIntermediatePoints(points, t) {
     const intermediatePoints = [];
     for (let i = 0; i < points.length - 1; i++) {
@@ -310,12 +312,11 @@ function computeIntermediatePoints(points, t) {
     return intermediatePoints;
 }
 
-// Render Intermediate Points and Lines
 function renderIntermediatePoints() {
     if (points.length > 2 && showIntermediate) {
         const intermediatePoints = computeIntermediatePoints(points, t);
 
-        // Draw the intermediate points
+
         const intermediateVertices = intermediatePoints.flat();
         const intermediateBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, intermediateBuffer);
@@ -326,25 +327,24 @@ function renderIntermediatePoints() {
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Green color for intermediate points
+        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
         gl.drawArrays(gl.POINTS, 0, intermediatePoints.length);
 
-        // Draw the lines connecting the intermediate points
+
         if (intermediatePoints.length >= 2) {
-            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0); // Green color for intermediate lines
+            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
             gl.drawArrays(gl.LINE_STRIP, 0, intermediatePoints.length);
         }
     }
 }
 
-// Render Function
 function render() {
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     if (points.length > 0) {
-        const vertices = points.flat(); // Flatten the array of points
+        const vertices = points.flat();
 
         const vertexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -354,26 +354,26 @@ function render() {
         gl.enableVertexAttribArray(positionAttributeLocation);
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // Pass the point size to the shader
+
         const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
-        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor'); // Get the color uniform location
+        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
         gl.useProgram(shaderProgram);
         gl.uniform1f(pointSizeLocation, pointSize);
 
-        // Draw the points
-        gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0); // Blue color for points
+
+        gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
         gl.drawArrays(gl.POINTS, 0, points.length);
 
-        // Draw the lines connecting the points
+
         if (points.length >= 2) {
-            gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0); // Blue color for lines
+            gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
             gl.drawArrays(gl.LINE_STRIP, 0, points.length);
         }
 
-        // Draw the intermediate points and lines
+
         renderIntermediatePoints();
 
-        // Draw the Bézier curve
+
         renderBezierCurve();
     }
 }
