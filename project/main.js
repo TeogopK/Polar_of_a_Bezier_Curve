@@ -73,7 +73,6 @@ let showIntermediate = true;
 let showFirstPolar = true;
 
 function resizeCanvas() {
-
     const canvasStyle = window.getComputedStyle(canvas);
     const canvasWidth = parseFloat(canvasStyle.width);
     const canvasHeight = parseFloat(canvasStyle.height);
@@ -96,13 +95,11 @@ function getNormalizedMouseCoordinates(event) {
 
 function increasePointSize() {
     pointSize += 1.0;
-
     render();
 }
 
 function decreasePointSize() {
     pointSize = Math.max(1.0, pointSize - 1.0);
-
     render();
 }
 
@@ -125,7 +122,6 @@ function toggleFirstPolar() {
 
 function clearAllPoints() {
     points = [];
-
     render();
 }
 
@@ -135,7 +131,6 @@ function resetToDefaults() {
     t = DEFAULT_T;
     tSlider.value = DEFAULT_T;
     tValueDisplay.textContent = DEFAULT_T.toFixed(1);
-
     render();
 }
 
@@ -188,7 +183,6 @@ canvas.addEventListener('click', (event) => {
             const clickedPointIndex = findClickedPointIndex(x, y);
             if (clickedPointIndex !== -1) {
                 points.splice(clickedPointIndex, 1);
-
                 render();
             }
         } else if (!event.ctrlKey) {
@@ -216,7 +210,6 @@ canvas.addEventListener('mousedown', (event) => {
 
         if (event.ctrlKey) {
             selectedPointIndex = findClickedPointIndex(x, y);
-
         }
     }
 });
@@ -248,26 +241,66 @@ function deCasteljau(points, t) {
     return tmpPoints[0];
 }
 
-function renderBezierCurve() {
-    if (points.length > 2) {
-        const curveVertices = [];
-        for (let t = 0; t <= 1; t += 0.01) {
-            const point = deCasteljau(points, t);
-            curveVertices.push(point[0], point[1]);
-        }
+function setupBuffer(vertices) {
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-        const curveBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, curveBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(curveVertices), gl.STATIC_DRAW);
+    const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+    gl.enableVertexAttribArray(positionAttributeLocation);
+    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+    return buffer;
+}
 
-        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.4, 0.7, 1.0, 1.0);
-        gl.drawArrays(gl.LINE_STRIP, 0, curveVertices.length / 2);
+function renderStraightLines(points, color) {
+    if (points.length < 2) {
+        return;
     }
+
+    const vertices = points.flat();
+
+    setupBuffer(vertices);
+    const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
+    gl.uniform4f(colorLocation, ...color);
+
+    gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+}
+
+function renderCurve(controlPoints, color, mode) {
+    if (controlPoints.length < 2) {
+        return;
+    }
+
+    const vertices = [];
+    for (let t = 0; t <= 1; t += 0.01) {
+        const point = deCasteljau(controlPoints, t);
+        vertices.push(point[0], point[1]);
+    }
+
+    setupBuffer(vertices);
+    const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
+    gl.uniform4f(colorLocation, ...color);
+
+    gl.drawArrays(mode, 0, vertices.length / 2);
+}
+
+function renderPoints(points, color, size) {
+    if (points.length === 0) {
+        return;
+    }
+
+    const vertices = points.flat();
+
+    setupBuffer(vertices);
+    const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
+    gl.uniform4f(colorLocation, ...color);
+
+    const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
+    gl.uniform1f(pointSizeLocation, size);
+
+    gl.useProgram(shaderProgram);
+    gl.drawArrays(gl.POINTS, 0, points.length);
 }
 
 const tSlider = document.getElementById('t-slider');
@@ -321,89 +354,42 @@ function computeIntermediatePoints(points, t) {
     return intermediatePoints;
 }
 
-function renderIntermediatePoints() {
-    if (points.length > 2 && showIntermediate) {
-        const intermediatePoints = computeIntermediatePoints(points, t);
-
-        const intermediateVertices = intermediatePoints.flat();
-        const intermediateBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, intermediateBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(intermediateVertices), gl.STATIC_DRAW);
-
-        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-
-        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
-        gl.drawArrays(gl.POINTS, 0, intermediatePoints.length);
-
-        if (intermediatePoints.length >= 2) {
-            gl.uniform4f(colorLocation, 0.1, 0.8, 0.2, 1.0);
-            gl.drawArrays(gl.LINE_STRIP, 0, intermediatePoints.length);
-        }
-    }
-}
-
-function renderPolarCurve() {
-    if (points.length > 1 && showFirstPolar) {
-        const polarControlPoints = computeIntermediatePoints(points, t);
-
-        const polarVertices = [];
-        for (let t2 = 0; t2 <= 1; t2 += 0.01) {
-            const point = deCasteljau(polarControlPoints, t2);
-            polarVertices.push(point[0], point[1]);
-        }
-
-        const polarBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, polarBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(polarVertices), gl.STATIC_DRAW);
-
-        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-
-        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.8, 0.2, 0.2, 1.0);
-        gl.drawArrays(gl.LINE_STRIP, 0, polarVertices.length / 2);
-    }
-}
-
 function render() {
-
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(shaderProgram);
 
     if (points.length > 0) {
-        const vertices = points.flat();
+        // Render control points
+        renderPoints(points, [0.1, 0.1, 0.8, 1.0], pointSize);
 
-        const vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-        const positionAttributeLocation = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(positionAttributeLocation);
-        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
-
-        const pointSizeLocation = gl.getUniformLocation(shaderProgram, 'uPointSize');
-        const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.useProgram(shaderProgram);
-        gl.uniform1f(pointSizeLocation, pointSize);
-
-        gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
-        gl.drawArrays(gl.POINTS, 0, points.length);
-
+        // Render control lines as straight lines
         if (points.length >= 2) {
-            gl.uniform4f(colorLocation, 0.1, 0.1, 0.8, 1.0);
-            gl.drawArrays(gl.LINE_STRIP, 0, points.length);
+            renderStraightLines(points, [0.1, 0.1, 0.8, 1.0]);
         }
 
-        renderBezierCurve();
-        renderIntermediatePoints();
-        renderPolarCurve();
+        // Render Bézier curve
+        if (points.length > 2) {
+            renderCurve(points, [0.4, 0.7, 1.0, 1.0], gl.LINE_STRIP);
+        }
+
+        // Render intermediate points and lines
+        if (showIntermediate && points.length > 2) {
+            const intermediatePoints = computeIntermediatePoints(points, t);
+            renderPoints(intermediatePoints, [0.1, 0.8, 0.2, 1.0], pointSize);
+            if (intermediatePoints.length >= 2) {
+                renderStraightLines(intermediatePoints, [0.1, 0.8, 0.2, 1.0]);
+            }
+        }
+
+        // Render polar curve
+        if (showFirstPolar && points.length > 1) {
+            const polarControlPoints = computeIntermediatePoints(points, t);
+            renderCurve(polarControlPoints, [0.8, 0.2, 0.2, 1.0], gl.LINE_STRIP);
+        }
     }
 }
 
-resetToDefaults()
+resetToDefaults();
 resizeCanvas();
 render();
