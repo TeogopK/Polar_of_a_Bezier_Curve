@@ -345,19 +345,9 @@ function renderIntermediatePoints() {
     }
 }
 
-function computeFirstIteration(points, t) {
-    const firstIteration = [];
-    for (let i = 0; i < points.length - 1; i++) {
-        const x = (1 - t) * points[i][0] + t * points[i + 1][0];
-        const y = (1 - t) * points[i][1] + t * points[i + 1][1];
-        firstIteration.push([x, y]);
-    }
-    return firstIteration;
-}
-
 function renderPolarCurve() {
     if (points.length > 1 && showFirstPolar) {
-        const polarControlPoints = computeFirstIteration(points, t);
+        const polarControlPoints = computeIntermediatePoints(points, t);
 
         const polarVertices = [];
         for (let t2 = 0; t2 <= 1; t2 += 0.01) {
@@ -374,7 +364,7 @@ function renderPolarCurve() {
         gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
         const colorLocation = gl.getUniformLocation(shaderProgram, 'uColor');
-        gl.uniform4f(colorLocation, 0.8, 0.2, 0.2, 1.0); // Red color for polar curve
+        gl.uniform4f(colorLocation, 0.8, 0.2, 0.2, 1.0);
         gl.drawArrays(gl.LINE_STRIP, 0, polarVertices.length / 2);
     }
 }
