@@ -11,6 +11,9 @@ Creating an interactive canvas in WebGL with the algorithm *Polar of a Bézier C
 2. **Program Functionality and Examples (User Guide):**  
    A comprehensive explanation of the program's functionality is included, along with examples and a detailed user guide.  
 
+### Interface
+
+![Example of the interface](documentation/media/example.png)
 
 ### Key Implementations:  
 - The program allows **interactive selection of data on the screen**, enabling visual control over the curve's appearance. This feature highlights the capabilities of the geometric algorithms covered in the course.  
@@ -19,6 +22,6 @@ Creating an interactive canvas in WebGL with the algorithm *Polar of a Bézier C
 - Additional features have been incorporated to enhance visualization.
 
 
-## Materials
+### Materials
 - [WebGL Fundamentals](https://webglfundamentals.org/)
 - [WebGL Tutorial Setup](https://www.youtube.com/watch?v=kB0ZVUrI4Aw)
